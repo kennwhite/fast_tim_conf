@@ -17,6 +17,7 @@ function format_new_acr(acr)
 end
 
 function propigate_tid(acr, tid)
+  -- TODO notify global, move to memcached proxy
   memc_set(acr, tid)
 end
 
@@ -42,8 +43,6 @@ function memc_get(key)
   return resp.body, resp.status
 end
 
-memc_set('hello2', 'this is the answer')
-
 local headers = ngx.req.get_headers()
 local key = 'password'
 local acr = headers['X-ACR']
@@ -59,9 +58,8 @@ if acr then
   acr = string.format("%d", math.random(10000))
   -- TODO acr decode
 
-  --> match up
+  -- match up
   tid, status = memc_get(acr)
-
   if status == ngx.HTTP_NOT_FOUND then
     tid = crypt.hash(format_new_acr(acr))
     propigate_tid(acr, tid)
@@ -71,7 +69,8 @@ else --> Roll forward
   local exid =  etag:match( "[^-]*-(.*)" )
 
   --> TODO look up key for idx
+  -- key, status = memc_get(string.format("tim-key-index-%s", idx))
   tid = crypt.decrypt(key, exid)
 end
 
-build_response(memc_get('hello2'))
+build_response(crypt.encrypt(key, tid))

@@ -14,8 +14,6 @@
   #include <openssl/sha.h>
 #endif
 
-
-
 void hash(unsigned char *output, const char *input, int length);
 int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key);
 int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen);
