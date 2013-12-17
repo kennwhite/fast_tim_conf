@@ -1,18 +1,9 @@
-#define LUA_BUILD_AS_DLL
-#define LUA_API         extern
-
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
-#if defined(__APPLE__) && defined(__MACH__)
-  #define COMMON_DIGEST_FOR_OPENSSL
-  #include <CommonCrypto/CommonDigest.h>
-  #include <CommonCrypto/CommonCryptor.h>
-#else
-  #include <openssl/aes.h>
-  #include <openssl/sha.h>
-#endif
+#include <openssl/aes.h>
+#include <openssl/sha.h>
 
 void hash(unsigned char *output, const char *input, int length);
 int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key);
@@ -41,7 +32,7 @@ static int l_encrypt(lua_State *L) {
   const char *val= luaL_checklstring(L, 2, &valLen);
   unsigned char encr[SHA256_DIGEST_LENGTH];
 
-  size_t bufferSize = valLen + kCCBlockSizeAES128;
+  size_t bufferSize = valLen;// + kCCBlockSizeAES128;
   unsigned char buffer[bufferSize];
 
 
@@ -91,6 +82,7 @@ int main() {
 int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key) {
   size_t outLength = 0;
 
+  /*
   int result = CCCrypt(kCCEncrypt, // operation
       kCCAlgorithmAES128, // Algorithm
       kCCOptionPKCS7Padding, // options
@@ -102,13 +94,14 @@ int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
       buffer, // dataOut
       bufferSize, // dataOutAvailable
       &outLength); // dataOutMoved
-
+  */
+  int result = 0;
   return result;
 }
 
 int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen) {
   size_t outLength = 0;
-
+  /*
   int result = CCCrypt(kCCDecrypt, // operation
       kCCAlgorithmAES128, // Algorithm
       kCCOptionPKCS7Padding, // options
@@ -120,7 +113,8 @@ int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
       buffer, // dataOut
       bufferSize, // dataOutAvailable
       outLen); // dataOutMoved
-
+  */
+  int result = 0;
   return result;
 }
 

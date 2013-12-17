@@ -1,6 +1,6 @@
 all:
-	gcc -o crypt.o crypt.c -L/usr/include -luajit-2.0
+	gcc -o crypt.so crypt.c -I/usr/include/luajit-2.0 -lcrypto -lluajit-5.1
 
 install:
 	mv lua /var/www/lua
-	mv crypt.o /var/www
+	mv crypt.so /var/www
