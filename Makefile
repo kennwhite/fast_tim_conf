@@ -3,4 +3,4 @@ all:
 
 install:
 	cp -r lua /var/www
-	cp crypt.so /var/www
+	cp crypt.so /var/www/lua
