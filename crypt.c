@@ -90,9 +90,9 @@ int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
 
   ctx = EVP_CIPHER_CTX_new();
 
-  EVP_EncryptInit(ctx, EVP_aes_256_cbc(), key, iv);
+  EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), key, iv);
   EVP_EncryptUpdate(ctx, buffer, &outlen1, data, dataLen);
-  EVP_EncryptFinal(ctx, buffer + outlen1, &outlen2);
+  EVP_EncryptFinal_ex(ctx, buffer + outlen1, &outlen2);
   return 0;
   
   /*
@@ -119,9 +119,9 @@ int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
 
   ctx = EVP_CIPHER_CTX_new();
 
-  EVP_DecryptInit(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+  EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
   EVP_DecryptUpdate(ctx, buffer, &outlen1, data, dataLen);
-  EVP_DecryptFinal(ctx, buffer + outlen1, &outlen2);
+  EVP_DecryptFinal_ex(ctx, buffer + outlen1, &outlen2);
   /*
   int result = CCCrypt(kCCDecrypt, // operation
       kCCAlgorithmAES128, // Algorithm
