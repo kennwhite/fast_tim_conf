@@ -113,7 +113,7 @@ int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
 }
 
 int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen) {
-  EVP_CIPHER_CTX ctx;
+  EVP_CIPHER_CTX *ctx;
   unsigned char iv[16] = {0};
   int outlen1, outlen2;
 
