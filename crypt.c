@@ -2,8 +2,9 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include <openssl/aes.h>
 #include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/evp.h>
 
 void hash(unsigned char *output, const char *input, int length);
 int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key);
@@ -28,11 +29,11 @@ static int l_encrypt(lua_State *L) {
   size_t keyLen, valLen;
 
   // Key should be kCCKeySizeAES256
-  const char *key= luaL_checklstring(L, 1, &keyLen);
+  //const char *key= luaL_checklstring(L, 1, &keyLen);
+  const char *key = "01234567890123456789012345678901";
   const char *val= luaL_checklstring(L, 2, &valLen);
-  unsigned char encr[SHA256_DIGEST_LENGTH];
 
-  size_t bufferSize = valLen;// + kCCBlockSizeAES128;
+  size_t bufferSize = valLen + AES_BLOCK_SIZE;// + kCCBlockSizeAES128;
   unsigned char buffer[bufferSize];
 
 
@@ -48,7 +49,8 @@ static int l_encrypt(lua_State *L) {
 
 static int l_decrypt(lua_State *L) {
   size_t keyLen, dataLen, outLen;
-  const char *key = luaL_checklstring(L, 1, &keyLen);
+  //const char *key = luaL_checklstring(L, 1, &keyLen);
+  const char *key = "01234567890123456789012345678901";
   const char *data = luaL_checklstring(L, 2, &dataLen);
 
   char decryptBuffer[dataLen];
@@ -82,6 +84,17 @@ int main() {
 int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key) {
   size_t outLength = 0;
 
+  EVP_CIPHER_CTX *ctx;
+  unsigned char iv[16] = {0};
+  int outlen1, outlen2;
+
+  ctx = EVP_CIPHER_CTX_new();
+
+  EVP_EncryptInit(ctx, EVP_aes_256_cbc(), key, iv);
+  EVP_EncryptUpdate(ctx, buffer, &outlen1, data, dataLen);
+  EVP_EncryptFinal(ctx, buffer + outlen1, &outlen2);
+  return 0;
+  
   /*
   int result = CCCrypt(kCCEncrypt, // operation
       kCCAlgorithmAES128, // Algorithm
@@ -95,12 +108,20 @@ int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
       bufferSize, // dataOutAvailable
       &outLength); // dataOutMoved
   */
-  int result = 0;
-  return result;
+  //int result = 0;
+  //return result;
 }
 
 int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen) {
-  size_t outLength = 0;
+  EVP_CIPHER_CTX ctx;
+  unsigned char iv[16] = {0};
+  int outlen1, outlen2;
+
+  ctx = EVP_CIPHER_CTX_new();
+
+  EVP_DecryptInit(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+  EVP_DecryptUpdate(ctx, buffer, &outlen1, data, dataLen);
+  EVP_DecryptFinal(ctx, buffer + outlen1, &outlen2);
   /*
   int result = CCCrypt(kCCDecrypt, // operation
       kCCAlgorithmAES128, // Algorithm
@@ -114,8 +135,7 @@ int decrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
       bufferSize, // dataOutAvailable
       outLen); // dataOutMoved
   */
-  int result = 0;
-  return result;
+  return outlen1 + outlen2;
 }
 
 void hash(unsigned char *output, const char *input, int length) {
