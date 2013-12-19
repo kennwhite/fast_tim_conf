@@ -90,7 +90,7 @@ int encrypt(unsigned char *buffer, size_t bufferSize, const char *data, size_t d
 
   ctx = EVP_CIPHER_CTX_new();
 
-  EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), key, iv);
+  EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
   EVP_EncryptUpdate(ctx, buffer, &outlen1, data, dataLen);
   EVP_EncryptFinal_ex(ctx, buffer + outlen1, &outlen2);
   return 0;
