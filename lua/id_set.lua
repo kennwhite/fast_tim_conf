@@ -44,7 +44,7 @@ function memc_get(key)
 end
 
 local headers = ngx.req.get_headers()
-local key = 'password'
+local key = 'password12344444444'
 local acr = headers['X-ACR']
 local etag = headers['IF-NONE-MATCH']
 local tid
