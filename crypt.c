@@ -6,7 +6,7 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
-int encrypt_str(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen) {
+int encrypt_str(unsigned char *buffer, const char *data, size_t dataLen, const char *key, size_t *outLen) {
   EVP_CIPHER_CTX *ctx;
   // TODO Bad
   unsigned char iv[16] = {0};
@@ -25,20 +25,21 @@ int encrypt_str(unsigned char *buffer, size_t bufferSize, const char *data, size
   return 1;
 }
 
-int decrypt_str(unsigned char *buffer, size_t bufferSize, const char *data, size_t dataLen, const char *key, size_t *outLen) {
+int decrypt_str(unsigned char *buffer, const char *data, size_t dataLen, const char *key, size_t *outLen) {
   EVP_CIPHER_CTX *ctx;
   // TODO Bad
   unsigned char iv[16] = {0};
   int outlen1, outlen2;
 
-  ctx = EVP_CIPHER_CTX_new();
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+    return 0;
 
   if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv) != 1)
-    return 0;
+    return 2;
   if (EVP_DecryptUpdate(ctx, buffer, &outlen1, data, dataLen) != 1)
-    return 0;
+    return 3;
   if (EVP_DecryptFinal_ex(ctx, buffer + outlen1, &outlen2) != 1)
-    return 0;
+    return 4;
 
   *outLen = outlen1 + outlen2;
   return 1;
@@ -83,12 +84,12 @@ static int l_encrypt(lua_State *L) {
   bufferSize = valLen + AES_BLOCK_SIZE;
   unsigned char buffer[bufferSize];
 
-  if (encrypt_str(buffer, bufferSize, val, valLen, key, &outLen) != 1)
+  if (encrypt_str(buffer, val, valLen, key, &outLen) != 1)
     return luaL_error(L, "Error encrypting value");
 
   luaL_Buffer b;
   luaL_buffinit(L, &b);
-  luaL_addlstring(&b, (char *)buffer, bufferSize);
+  luaL_addlstring(&b, (char *)buffer, outLen);
   luaL_pushresult(&b);
 
   return 1;
@@ -101,8 +102,9 @@ static int l_decrypt(lua_State *L) {
 
   char decryptBuffer[dataLen];
 
-  if (decrypt_str(decryptBuffer, dataLen, data, dataLen, key, &outLen) != 1)
-    return luaL_error(L, "Error decrypting value");
+  int res = decrypt_str(decryptBuffer, data, dataLen, key, &outLen);
+  if (res != 1)
+    return luaL_error(L, "Error decrypting value %d, data:%s, dataLen: %d", res, data, dataLen);
 
   luaL_Buffer b;
   luaL_buffinit(L, &b);
@@ -125,28 +127,5 @@ int luaopen_crypt (lua_State *L) {
 }
 
 int main() {
-  /*
-  const char *key = "01234567890123456789012";
-  const char *val= "this is a val   ";
-
-  size_t bufferSize = 16 + AES_BLOCK_SIZE;// + kCCBlockSizeAES128;
-  unsigned char buffer[bufferSize];
-
-
-  int result = encrypt(buffer, bufferSize, val, 16, key);
- printf("%s hello\n", buffer);
-        BIO_dump_fp(stdout, buffer, bufferSize);
-
-  size_t keyLen, dataLen, outLen;
-  //const char *key = luaL_checklstring(L, 1, &keyLen);
-  key = "01234567890123456789012";
-  const char *data = buffer;
-
-  char decryptBuffer[result];
-
-  decrypt((unsigned char *)decryptBuffer, dataLen, data, bufferSize, key, &outLen);
-  printf("%s dec\n", decryptBuffer);
-  */
-
   return 0;
 }
