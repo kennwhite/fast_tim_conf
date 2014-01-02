@@ -1,15 +1,24 @@
 crypt = require('crypt')
 local currentIdx = os.time()/60/60/24 - 15000
 
+function encode_in_hex(str)
+  return (str:gsub('.', function(s) return ('%X'):format(s:byte()) end))
+end
+
+function decode_hex(str)
+  return (hex:gsub('..', function(v) return ("%c"):format(tonumber(v, 16)) end))
+end
+
 function build_response(exid)
-  encoded = string.format("\"%4d-%s\"", currentIdx, exid)
-  ngx.header['ETag'] = encoded
+  encoded = encode_in_hex(exid)
+  etag = string.format("\"%4d-%s\"", currentIdx, encoded)
+  ngx.header['ETag'] = etag
   --> set expires to something
   ngx.header['Expires'] = "Fri, 01 May 2020 03:47:24 GMT"
   ngx.header['Cache-Control'] = "max-age=315360000, private"
-  ngx.header['Set-Cookie'] = string.format("__acr=%s;", encoded)
+  ngx.header['Set-Cookie'] = string.format("__acr=%s;", etag)
 
-  ngx.say(string.format("window.onload=function(){window.ACR={acr:'%s'}};window['exidInserted'] ? window.exidInserted('%s') : false;", exid, exid))
+  ngx.say(string.format("window.onload=function(){window.ACR={acr:'%s'}};window['exidInserted'] ? window.exidInserted('%s') : false;", encoded, encoded))
 end
 
 function format_new_acr(acr)
@@ -66,7 +75,7 @@ if acr then
   end
 else --> Roll forward
   local idx =  etag:match( "[^-]*" )
-  local exid =  etag:match( "[^-]*-(.*)" )
+  local exid =  decode_hex(etag:match( "[^-]*-(.*)"))
 
   --> TODO look up key for idx
   -- key, status = memc_get(string.format("tim-key-index-%s", idx))
