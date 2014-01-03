@@ -58,7 +58,7 @@ int hash_str(unsigned char *output, const char *input, int length) {
   return 1;
 }
 
-void convert_from_hex(char *hexStr, char *result, size_t resultSize) {
+void convert_from_hex(unsigned char *hexStr, unsigned char *result, size_t resultSize) {
   char *dst = result;
   char *end = result + resultSize;
   unsigned int u;
@@ -69,12 +69,12 @@ void convert_from_hex(char *hexStr, char *result, size_t resultSize) {
   }
 }
 
-void convert_to_hex(char *str, size_t strLen, char *hexStr) {
+void convert_to_hex(unsigned char *str, size_t strLen, unsigned char *hexStr) {
   char *start = str;
   char *end = str + strLen;
 
   while(start < end) {
-    sprintf(hexStr, "%2x", *start);
+    sprintf(hexStr, "%02x", *start);
     start += 1;
     hexStr += 2;
   }
@@ -110,7 +110,7 @@ static int l_encrypt(lua_State *L) {
     return luaL_error(L, "Error encrypting value");
 
   size_t hexOutLen = outLen * 2;
-  char hexStr[hexOutLen];
+  unsigned char hexStr[hexOutLen];
 
   convert_to_hex(buffer, outLen, hexStr);
 
@@ -128,9 +128,9 @@ static int l_decrypt(lua_State *L) {
   const char *hexData = luaL_checklstring(L, 2, &hexDataLen);
 
   dataLen = hexDataLen/2;
-  char data[dataLen];
+  unsigned char data[dataLen];
 
-  convert_from_hex(hexData, data, dataLen);
+  convert_from_hex((unsigned char *)hexData, data, dataLen);
 
   char decryptBuffer[dataLen];
 

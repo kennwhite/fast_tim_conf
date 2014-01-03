@@ -10,7 +10,7 @@ function decode_hex(str)
 end
 
 function build_response(exid)
-  etag = string.format("\"%4d-%s\"", currentIdx, encoded)
+  etag = string.format("\"%4d-%s\"", currentIdx, exid)
   ngx.header['ETag'] = etag
   --> set expires to something
   ngx.header['Expires'] = "Fri, 01 May 2020 03:47:24 GMT"
