@@ -101,7 +101,7 @@ static int l_encrypt(lua_State *L) {
 
   // TODO Key must be the correct key size
   const char *key = luaL_checklstring(L, 1, &keyLen);
-  const char *hexVal = luaL_checklstring(L, 2, &valLen);
+  const char *val = luaL_checklstring(L, 2, &valLen);
 
   bufferSize = valLen + AES_BLOCK_SIZE;
   unsigned char buffer[bufferSize];
@@ -127,7 +127,7 @@ static int l_decrypt(lua_State *L) {
   const char *key = luaL_checklstring(L, 1, &keyLen);
   const char *hexData = luaL_checklstring(L, 2, &hexDataLen);
 
-  size_t dataLen = hexDataLen/2;
+  dataLen = hexDataLen/2;
   char data[dataLen];
 
   convert_from_hex(hexData, data, dataLen);
