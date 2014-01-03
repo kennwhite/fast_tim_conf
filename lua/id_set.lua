@@ -75,9 +75,9 @@ else --> Roll forward
   local idx =  etag:match( "[^-]*" )
   local exid =  etag:match( "[^-]*-(.*)")
 
-  local old_key, status = memc_get("exid_key_%d":format(idx))
+  local old_key, status = memc_get(("exid_key_%s"):format(idx))
   tid = crypt.decrypt(old_key, exid)
 end
 
-local key, status = memc_get('exid_key_%d':format(currentIdx)) --'password12344444444'
+local key, status = memc_get(("exid_key_%d"):format(currentIdx)) --'password12344444444'
 build_response(crypt.encrypt(key, tid))
