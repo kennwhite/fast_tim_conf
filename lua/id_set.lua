@@ -52,7 +52,6 @@ function memc_get(key)
 end
 
 local headers = ngx.req.get_headers()
-local key = 'password12344444444'
 local acr = headers['X-ACR']
 local etag = headers['IF-NONE-MATCH']
 local tid
@@ -76,9 +75,9 @@ else --> Roll forward
   local idx =  etag:match( "[^-]*" )
   local exid =  etag:match( "[^-]*-(.*)")
 
-  --> TODO look up key for idx
-  -- key, status = memc_get(string.format("tim-key-index-%s", idx))
-  tid = crypt.decrypt(key, exid)
+  local old_key, status = memc_get("exid_key_%d":format(idx))
+  tid = crypt.decrypt(old_key, exid)
 end
 
+local key, status = memc_get('exid_key_%d':format(currentIdx)) --'password12344444444'
 build_response(crypt.encrypt(key, tid))
