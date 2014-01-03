@@ -10,7 +10,6 @@ function decode_hex(str)
 end
 
 function build_response(exid)
-  encoded = encode_in_hex(exid)
   etag = string.format("\"%4d-%s\"", currentIdx, encoded)
   ngx.header['ETag'] = etag
   --> set expires to something
@@ -18,7 +17,7 @@ function build_response(exid)
   ngx.header['Cache-Control'] = "max-age=315360000, private"
   ngx.header['Set-Cookie'] = string.format("__acr=%s;", etag)
 
-  ngx.say(string.format("window.onload=function(){window.ACR={acr:'%s'}};window['exidInserted'] ? window.exidInserted('%s') : false;", encoded, encoded))
+  ngx.say(string.format("window.onload=function(){window.ACR={acr:'%s'}};window['exidInserted'] ? window.exidInserted('%s') : false;", exid, exid))
 end
 
 function format_new_acr(acr)
@@ -75,7 +74,7 @@ if acr then
   end
 else --> Roll forward
   local idx =  etag:match( "[^-]*" )
-  local exid =  decode_hex(etag:match( "[^-]*-(.*)"))
+  local exid =  etag:match( "[^-]*-(.*)")
 
   --> TODO look up key for idx
   -- key, status = memc_get(string.format("tim-key-index-%s", idx))

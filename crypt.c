@@ -58,6 +58,28 @@ int hash_str(unsigned char *output, const char *input, int length) {
   return 1;
 }
 
+void convert_from_hex(char *hexStr, char *result, size_t resultSize) {
+  char *dst = result;
+  char *end = result + resultSize;
+  unsigned int u;
+
+  while (dst < end && sscanf(hexStr, "%2x", &u) == 1) {
+    *dst++ = u;
+    hexStr += 2;
+  }
+}
+
+void convert_to_hex(char *str, size_t strLen, char *hexStr) {
+  char *start = str;
+  char *end = str + strLen;
+
+  while(start < end) {
+    sprintf(hexStr, "%2x", *start);
+    start += 1;
+    hexStr += 2;
+  }
+}
+
 static int l_hash(lua_State *L) {
   size_t len;
   const char *str = luaL_checklstring(L, 1, &len);
@@ -79,7 +101,7 @@ static int l_encrypt(lua_State *L) {
 
   // TODO Key must be the correct key size
   const char *key = luaL_checklstring(L, 1, &keyLen);
-  const char *val = luaL_checklstring(L, 2, &valLen);
+  const char *hexVal = luaL_checklstring(L, 2, &valLen);
 
   bufferSize = valLen + AES_BLOCK_SIZE;
   unsigned char buffer[bufferSize];
@@ -87,18 +109,28 @@ static int l_encrypt(lua_State *L) {
   if (encrypt_str(buffer, val, valLen, key, &outLen) != 1)
     return luaL_error(L, "Error encrypting value");
 
+  size_t hexOutLen = outLen * 2;
+  char hexStr[hexOutLen];
+
+  convert_to_hex(buffer, outLen, hexStr);
+
   luaL_Buffer b;
   luaL_buffinit(L, &b);
-  luaL_addlstring(&b, (char *)buffer, outLen);
+  luaL_addlstring(&b, hexStr, hexOutLen);
   luaL_pushresult(&b);
 
   return 1;
 }
 
 static int l_decrypt(lua_State *L) {
-  size_t keyLen, dataLen, outLen;
+  size_t keyLen, dataLen, outLen, hexDataLen;
   const char *key = luaL_checklstring(L, 1, &keyLen);
-  const char *data = luaL_checklstring(L, 2, &dataLen);
+  const char *hexData = luaL_checklstring(L, 2, &hexDataLen);
+
+  size_t dataLen = hexDataLen/2;
+  char data[dataLen];
+
+  convert_from_hex(hexData, data, dataLen);
 
   char decryptBuffer[dataLen];
 
