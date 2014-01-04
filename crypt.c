@@ -88,9 +88,14 @@ static int l_hash(lua_State *L) {
   if (hash_str(encr, str, len) != 1)
     return luaL_error(L, "Error hashing value");
 
+  size_t hexOutLen = SHA256_DIGEST_LENGTH * 2;
+  char hexStr[hexOutLen];
+
+  convert_to_hex(encr, SHA256_DIGEST_LENGTH, hexStr);
+
   luaL_Buffer b;
   luaL_buffinit(L, &b);
-  luaL_addlstring(&b, (char *)encr, SHA256_DIGEST_LENGTH);
+  luaL_addlstring(&b, hexStr, hexOutLen);
   luaL_pushresult(&b);
 
   return 1;
