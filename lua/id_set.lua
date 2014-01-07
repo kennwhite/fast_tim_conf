@@ -26,7 +26,7 @@ end
 
 function propigate_tid(acr, tid)
   -- TODO notify global, move to memcached proxy
-  memc_set(acr, tid)
+  memc_set("acr_%s":format(acr), tid)
 end
 
 function memc_set(key, val)
@@ -62,8 +62,7 @@ if not acr and not etag then
 end
 
 if acr then
-  acr = string.format("%d", math.random(10000))
-  -- TODO acr decode
+  -- TODO acr decode if needed
 
   -- match up
   tid, status = memc_get(acr)
