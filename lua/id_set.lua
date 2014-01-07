@@ -26,7 +26,7 @@ end
 
 function propigate_tid(acr, tid)
   -- TODO notify global, move to memcached proxy
-  memc_set("acr_%s":format(acr), tid)
+  memc_set(("acr_%s"):format(acr), tid)
 end
 
 function memc_set(key, val)
