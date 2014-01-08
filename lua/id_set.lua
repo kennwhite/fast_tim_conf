@@ -1,14 +1,6 @@
 crypt = require('crypt')
 local currentIdx = os.time()/60/60/24 - 15000
 
-function encode_in_hex(str)
-  return (str:gsub('.', function(s) return ('%X'):format(s:byte()) end))
-end
-
-function decode_hex(str)
-  return (hex:gsub('..', function(v) return ("%c"):format(tonumber(v, 16)) end))
-end
-
 function build_response(exid)
   local full_id = "\"%4d-%s;ncc=9999;type=Dyna\"":format(currentIdx, exid)
   ngx.header['ETag'] = full_id
@@ -25,8 +17,8 @@ end
 --  return string.format("000-%s", acr)
 --end
 
+-- TODO Memcached Proxy should notify TIM backend server of new id
 function propigate_tid(acr, tid)
-  -- TODO notify global, move to memcached proxy
   memc_set(("acr_%s"):format(acr), tid)
 end
 
@@ -94,5 +86,7 @@ else -- etag present - roll forward
 
 end
 
-local key, status = memc_get(("exid_key_%d"):format(currentIdx)) --'password12344444444'
+-- Get current key for encoding
+local key, status = memc_get(("exid_key_%d"):format(currentIdx))
+
 build_response(crypt.encrypt(key, tid))
