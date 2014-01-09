@@ -2,8 +2,9 @@ crypt = require('crypt')
 local currentIdx = os.time()/60/60/24 - 15000
 
 function build_response(exid)
-  local full_id = "\"%4d-%s;ncc=9999;type=Dyna\"":format(currentIdx, exid)
-  ngx.header['ETag'] = full_id
+  local full_id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(currentIdx, exid)
+  ngx.header['ETag'] = ("\"%4d-%s\""):format(currentIdx, exid)
+
   --> set expires to something
   ngx.header['Expires'] = "Fri, 01 May 2020 03:47:24 GMT"
   ngx.header['Cache-Control'] = "max-age=315360000, private"
@@ -48,6 +49,13 @@ function decode_id(str)
   return str:match("(%d+)-([%d%a]+);ncc\=(%d+);type=(%a+)")
 end
 
+function decode_etag(str)
+  return str:match("\"(%d+)-([%d%a]+)\"")
+end
+
+ngx.header['Access-Control-Allow-Origin'] =  '*';
+ngx.header['Access-Control-Allow-Headers'] = '*';
+
 local headers = ngx.req.get_headers()
 local acr = headers['X-ACR']
 local etag = headers['IF-NONE-MATCH']
@@ -56,21 +64,21 @@ local tid
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
 if not acr and not etag then
-  ngx.exit(ngx.HTTP_NOT_FOUND)
+  ngx.exit(ngx.HTTP_OK)
 end
 
 if acr then
   -- Decode carrier external to carrier trusted - assumes if key not found
   -- that passed in key is the trusted 
   local c_key_index, c_id, c_op = decode_id(acr)
-  carrier_key, status = memc_get("carrier_%d_key_%d":format(c_op, c_c_key_index))
+  carrier_key, status = memc_get(("carrier_%d_key_%d"):format(c_op, c_key_index))
 
   if status == ngx.HTTP_FOUND then
     c_id = crypt.decrypt(carrier_key, c_id)
   end
 
   -- convert carrier trusted to tim trusted id
-  tid, status = memc_get("acr_%s":format(c_id))
+  tid, status = memc_get(("acr_%s"):format(c_id))
 
   -- Generate a new new tim trusted id for this carrier trusted id
   if status == ngx.HTTP_NOT_FOUND then
@@ -79,7 +87,7 @@ if acr then
   end
 
 else -- etag present - roll forward
-  idx, exid = decode_id(str)
+  idx, exid = decode_etag(etag)
 
   local old_key, status = memc_get(("exid_key_%s"):format(idx))
   tid = crypt.decrypt(old_key, exid)
