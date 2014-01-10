@@ -1,16 +1,26 @@
 crypt = require('crypt')
 local currentIdx = os.time()/60/60/24 - 15000
+local testmode = true
 
-function build_response(exid)
+function set_headers(exid)
   local full_id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(currentIdx, exid)
   ngx.header['ETag'] = ("\"%4d-%s\""):format(currentIdx, exid)
 
   --> set expires to something
   ngx.header['Expires'] = "Fri, 01 May 2020 03:47:24 GMT"
   ngx.header['Cache-Control'] = "max-age=315360000, private"
-  ngx.header['Set-Cookie'] = string.format("__acr=%s;", full_id)
+  ngx.header['Set-Cookie'] = string.format("__acr=%4d-%s; path=/", currentIdx, exid) 
+end
 
-  ngx.say(string.format("window.onload=function(){window.ACR={acr:'%s'}};window['exidInserted'] ? window.exidInserted('%s') : false;", full_id, full_id))
+function build_response(exid)
+  set_headers(exid)
+  ngx.say(string.format("window.ACR='%s';window['exidInserted'] ? window.exidInserted('%s') : false;", full_id, full_id)) 
+end
+
+function build_test_response(exid, trusted)
+  set_headers(exid)
+  ngx.say(string.format("window['exidInserted'] ? window.exidInserted('%s', '%s') : false;", full_id, trusted)) 
+
 end
 
 -- TODO is this necessary?
@@ -61,11 +71,11 @@ local acr = headers['X-ACR']
 local etag = headers['IF-NONE-MATCH']
 local tid
 
--- TODO only for testing 
-if string.find(headers['Referer'], '9292') or string.find(headers['Referrer'], 'wan') then 
-  acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+if testmode then
+  if string.find(headers['Referer'], '9292') or string.find(headers['Referrer'], 'wan') then 
+    acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+  end
 end
-
 
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
@@ -103,4 +113,8 @@ end
 -- Get current key for encoding
 local key, status = memc_get(("exid_key_%d"):format(currentIdx))
 
-build_response(crypt.encrypt(key, tid))
+if testmode then
+  build_test_response(crypt.encrypt(key, tid), tid)
+else
+  build_response(crypt.encrypt(key, tid))
+end
