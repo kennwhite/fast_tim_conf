@@ -1,5 +1,10 @@
 <html>
   <body>
     <h1>TIM Test Server Farm</h1>
+    <script>
+      if (document.cookie.indexOf('_fake_acr') == -1) {
+        document.cookie = "_fake_acr=1000-" + Math.random().toString(36).substring(2)
+      }
+    </script>
   </body>
 </html>
