@@ -62,10 +62,10 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 -- TODO only for testing 
-if string.find(headers['Referer'], '9292') then 
-acr = "1000-2xrkn8ov7q5s714i;ncc=111;type=Dyno" 
-  -- acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
-end 
+if string.find(headers['Referer'], '9292') or string.find(headers['Referrer'], 'wan') then 
+  acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+end
+
 
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
