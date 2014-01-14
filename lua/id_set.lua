@@ -78,7 +78,7 @@ if testmode then
     ngx.exit(ngx.HTTP_NOT_FOUND)
   end
 
-  if string.find(headers['Referer'], '9292') or string.find(headers['Referrer'], 'wan') then 
+  if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan')) then 
     if headers['Cookie'] then
       acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
     end
