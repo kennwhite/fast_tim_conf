@@ -14,11 +14,13 @@ end
 
 function build_response(exid)
   set_headers(exid)
+  local full_id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(currentIdx, exid) 
   ngx.say(string.format("window.ACR='%s';window['exidInserted'] ? window.exidInserted('%s') : false;", full_id, full_id)) 
 end
 
 function build_test_response(exid, trusted)
   set_headers(exid)
+  local full_id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(currentIdx, exid) 
   ngx.say(string.format("window['exidInserted'] ? window.exidInserted('%s', '%s') : false;", full_id, trusted)) 
 
 end
@@ -64,7 +66,7 @@ function decode_etag(str)
 end
 
 ngx.header['Access-Control-Allow-Origin'] =  '*';
-ngx.header['Access-Control-Allow-Headers'] = '*';
+ngx.header['Access-Control-Allow-Headers'] = 'IF-NONE-MATCH, X-ACR, FAIL';
 
 local headers = ngx.req.get_headers()
 local acr = headers['X-ACR']
@@ -72,8 +74,14 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 if testmode then
+  if headers['FAIL'] == 'true' then
+    ngx.exit(ngx.HTTP_NOT_FOUND)
+  end
+
   if string.find(headers['Referer'], '9292') or string.find(headers['Referrer'], 'wan') then 
-    acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+    if headers['Cookie'] then
+      acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+    end
   end
 end
 

@@ -1,10 +1,40 @@
 <html>
-  <body>
-    <h1>TIM Test Server Farm</h1>
+  <head>
     <script>
       if (document.cookie.indexOf('_fake_acr') == -1) {
         document.cookie = "_fake_acr=1000-" + Math.random().toString(36).substring(2)
       }
     </script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <h1 class='text-center'>TIM Test Server Farm</h1>
+    <div class='container'>
+
+      <div class='row'>
+        <div class='col-md-6 col-md-offset-3'>
+          This collection of pages is intended to demonstrate the eTag solution. It is required that you visit this page before viewing any of the demo pages every time you reset your cookies.
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-6 col-md-offset-3'>
+          <table class='table'>
+            <thead><tr><th></th><th>WiFi</th><th>WAN</th></tr></thead>
+            <tbody>
+              <tr>
+                <td> Domain A </td>
+                <td> <a href='http://www.timtest.com'> www.timtest.com </a></td>
+                <td> <a href='http://wan.timtest.com'> wan.timtest.com </a></td>
+              </tr>
+              <tr>
+                <td> Domain B </td>
+                <td> <a href='http://www.timtest.com'> www.timtest.com </a></td>
+                <td> <a href='http://wan.timtest.com'> wan.timtest.com </a></td>
+              </tr>
+            </tbody>
+          </div>
+        </div>
+    </div>
   </body>
 </html>
