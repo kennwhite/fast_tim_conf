@@ -33,6 +33,7 @@ end
 -- TODO Memcached Proxy should notify TIM backend server of new id
 function propigate_tid(acr, tid)
   memc_set(("acr_%s"):format(acr), tid)
+  memc_set(("tid_%s"):format(tid), acr)
 end
 
 function memc_set(key, val)
@@ -74,6 +75,21 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 if testmode then
+  if etag then
+    idx, exid = decode_etag(etag)
+    if currentIdx == idx then
+      local key, status = memc_get(("exid_key_%s"):format(idx))
+      tid = crypt.decrypt(key, exid)
+
+      acr, status = memc_get(("tid_%s"):format(tid))
+      if acr then
+        ngx.exit(ngx.NOT_MODIFIED) 
+      else
+        build_response(crypt.encrypt(key, 'MISSING'))
+      end
+    end
+  end
+
   if headers['FAIL'] == 'true' then
     ngx.exit(ngx.HTTP_NOT_FOUND)
   end
@@ -115,7 +131,6 @@ else -- etag present - roll forward
 
   local old_key, status = memc_get(("exid_key_%s"):format(idx))
   tid = crypt.decrypt(old_key, exid)
-
 end
 
 -- Get current key for encoding
