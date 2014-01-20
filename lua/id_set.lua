@@ -1,5 +1,5 @@
 crypt = require('crypt')
-local currentIdx = os.time()/60/60/24 - 15000
+local currentIdx = math.floor(os.time()/60/60/24 - 15000)
 local testmode = true
 
 function set_headers(exid)
@@ -63,7 +63,7 @@ function decode_id(str)
 end
 
 function decode_etag(str)
-  return str:match("\"(%d+)-([%d%a]+)\"")
+  return str:match("\"?(%d+)-(.*)\"?$")
 end
 
 ngx.header['Access-Control-Allow-Origin'] =  '*';
@@ -77,13 +77,14 @@ local tid
 if testmode then
   if etag then
     idx, exid = decode_etag(etag)
-    if currentIdx == idx then
+    if currentIdx == tonumber(idx) then
       local key, status = memc_get(("exid_key_%s"):format(idx))
+
       tid = crypt.decrypt(key, exid)
 
       acr, status = memc_get(("tid_%s"):format(tid))
       if acr then
-        ngx.exit(ngx.NOT_MODIFIED) 
+        ngx.exit(ngx.HTTP_NOT_MODIFIED) 
       else
         build_response(crypt.encrypt(key, 'MISSING'))
       end
@@ -128,7 +129,6 @@ if acr then
 
 else -- etag present - roll forward
   idx, exid = decode_etag(etag)
-
   local old_key, status = memc_get(("exid_key_%s"):format(idx))
   tid = crypt.decrypt(old_key, exid)
 end
