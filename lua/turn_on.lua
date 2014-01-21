@@ -50,5 +50,11 @@ local args = ngx.req.get_uri_args()
 
 local new_tid = crypt.hash(("%d%s"):format(math.random(100000), args.acr))
 
-memc_update(("acr_%s"):format(acr), new_tid)
-memc_set(("tid_%s"):format(new_tid), acr)
+res, status = memc_update(("acr_%s"):format(args.acr), new_tid)
+res2, status2 = memc_set(("tid_%s"):format(new_tid), args.acr)
+
+ngx.say(args.acr)
+ngx.say(new_tid)
+
+ngx.say(res, status)
+ngx.say(res2, status2)
