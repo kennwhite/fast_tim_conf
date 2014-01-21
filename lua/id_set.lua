@@ -75,6 +75,13 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 if testmode then
+    if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
+      if headers['Cookie'] then
+        acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
+      end
+    end
+  end
+
   if etag then
     idx, exid = decode_etag(etag)
     if currentIdx == tonumber(idx) then
@@ -82,9 +89,20 @@ if testmode then
 
       tid = crypt.decrypt(key, exid)
 
-      acr, status = memc_get(("tid_%s"):format(tid))
-      if acr then
+      linked_acr, status = memc_get(("tid_%s"):format(tid))
+      if status == ngx.HTTP_OK then
         ngx.exit(ngx.HTTP_NOT_MODIFIED) 
+      elseif acr then
+        tid, status = memc_get(("acr_%s"):format(acr))
+
+        if status == ngx.HTTP_NOT_FOUND then
+          tid = crypt.hash(acr)
+
+          memc_set(("acr_%s"):format(acr), tid)
+          memc_set(("tid_%s"):format(tid), acr)
+        end
+
+        build_response(crypt.encrypt(key, tid))
       else
         build_response(crypt.encrypt(key, 'MISSING'))
       end
@@ -94,13 +112,6 @@ if testmode then
   if headers['FAIL'] == 'true' then
     ngx.exit(ngx.HTTP_NOT_FOUND)
   end
-
-  if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
-    if headers['Cookie'] then
-      acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
-    end
-  end
-end
 
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
@@ -125,9 +136,6 @@ if acr then
   if status == ngx.HTTP_NOT_FOUND then
     tid = crypt.hash(acr)
 
-    ngx.say("acr_key: ", ("acr_%s"):format(acr))
-    ngx.say("tim_key: ", ("tid_%s"):format(tid))
-
     memc_set(("acr_%s"):format(acr), tid)
     memc_set(("tid_%s"):format(tid), acr)
   end
@@ -146,3 +154,4 @@ if testmode then
 else
   build_response(crypt.encrypt(key, tid))
 end
+

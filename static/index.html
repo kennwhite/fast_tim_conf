@@ -8,8 +8,7 @@
         if (document.cookie.indexOf('_fake_acr') == -1) {
           acr = "1000-" + Math.random().toString(36).substring(2)
           document.cookie = "_fake_acr=" + acr
-          document.cookie = "_disabled=false"
-          } else {
+        } else {
           cookies = document.cookie.split(';')
           for(var i=0; i<cookies.length; i++) {
             if (idx = cookies[i].indexOf('_fake_acr') != -1)
@@ -17,19 +16,23 @@
           }
         }
 
-        $("#c-id").html(acr)
+        $("#c-id").html(acr + ";ncc=111;type=Dyno")
 
-        if (document.cookie.indexOf('_disabled=false') == -1) {
-          $('#turn-off').addClass('hide')
-          $('#turn-on').removeClass('hide')
-          } else {
-          $('#turn-on').addClass('hide')
-          $('#turn-off').removeClass('hide')
-        }
       })
 
-      window.exidInserted = function(text, trusted) {
+      window.exidInserted = function(t_ext, trusted) {
         $(function(){
+          $("#t-ext").html(t_ext)
+          $("#trusted").html(trusted)
+
+          if (trusted == 'OPT-OUT') {
+            $('#turn-off').addClass('hide')
+            $('#turn-on').removeClass('hide')
+            } else {
+            $('#turn-on').addClass('hide')
+            $('#turn-off').removeClass('hide')
+          }
+
           $('#reset').on('click', function(e) {
             e.preventDefault();
             $.ajax({
@@ -38,8 +41,7 @@
                 tid: trusted
               },
               complete: function(resp) {
-                console.log(resp)
-                //window.location.reload()
+                window.location.reload()
               }
             });
           });
@@ -51,8 +53,7 @@
                 tid: trusted
               },
               complete: function(resp) {
-                console.log(resp)
-                //window.location.reload()
+                window.location.reload()
               }
             });
           });
@@ -61,11 +62,10 @@
             $.ajax({
               url: 'http://www.timdemo.net/turn_on',
               data: {
-                acr: acr
+                acr: acr + ";ncc=111;type=Dyno"
               },
               complete: function(resp) {
-                console.log(resp)
-                //window.location.reload()
+                window.location.reload()
               }
             });
           });
@@ -87,11 +87,19 @@
       <br>
       <div class='row'>
         <div class='col-md-6 col-md-offset-3'>
-          <table class='table'>
+          <table class='table' style='table-layout: fixed;'>
             <tbody>
               <tr>
                 <td> Fake Carrier ID </td>
                 <td id='c-id'></td>
+              </tr>
+              <tr>
+                <td> TIM Trusted </td>
+                <td id='trusted' style='word-wrap: break-word;'></td>
+              </tr>
+              <tr>
+                <td> TIM External </td>
+                <td id='t-ext' style='word-wrap: break-word;'></td>
               </tr>
             </tbody>
           </table>
