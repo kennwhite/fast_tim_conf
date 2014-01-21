@@ -47,12 +47,8 @@ end
 
 
 local args = ngx.req.get_uri_args() 
-local acr, status = memc_get(("tid_%s"):format(args.tid))
 
-local new_tid = "OPT-OUT"
+local new_tid = crypt.hash(("%d%s"):format(math.random(100000), args.acr))
+
 memc_update(("acr_%s"):format(acr), new_tid)
-memc_delete(("tid_%s"):format(args.tid))
-
-ngx.say("acr: ", acr)
-ngx.say("tid: ", args.tid)
-ngx.say("new tid", new_tid)
+memc_set(("tid_%s"):format(new_tid), acr)

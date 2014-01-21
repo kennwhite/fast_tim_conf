@@ -119,12 +119,17 @@ if acr then
   end
 
   -- convert carrier trusted to tim trusted id
-  tid, status = memc_get(("acr_%s"):format(c_id))
+  tid, status = memc_get(("acr_%s"):format(acr))
 
   -- Generate a new new tim trusted id for this carrier trusted id
   if status == ngx.HTTP_NOT_FOUND then
     tid = crypt.hash(acr)
-    propigate_tid(acr, tid)
+
+    ngx.say("acr_key: ", ("acr_%s"):format(acr))
+    ngx.say("tim_key: ", ("tid_%s"):format(tid))
+
+    memc_set(("acr_%s"):format(acr), tid)
+    memc_set(("tid_%s"):format(tid), acr)
   end
 
 else -- etag present - roll forward
