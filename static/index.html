@@ -3,17 +3,17 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
     <script>
+      var acr;
       $(function(){
-        var acr;
         if (document.cookie.indexOf('_fake_acr') == -1) {
           acr = "1000-" + Math.random().toString(36).substring(2)
           document.cookie = "_fake_acr=" + acr
           document.cookie = "_disabled=false"
-        } else {
+          } else {
           cookies = document.cookie.split(';')
           for(var i=0; i<cookies.length; i++) {
             if (idx = cookies[i].indexOf('_fake_acr') != -1)
-              acr = cookies[i].substring(10)
+            acr = cookies[i].substring(10)
           }
         }
 
@@ -22,18 +22,57 @@
         if (document.cookie.indexOf('_disabled=false') == -1) {
           $('#turn-off').addClass('hide')
           $('#turn-on').removeClass('hide')
-        } else {
+          } else {
           $('#turn-on').addClass('hide')
           $('#turn-off').removeClass('hide')
         }
-
-        $('#turn-off').on('click', function(e) {
-          e.preventDefault();
-
-        });
-
       })
+
+      window.exidInserted = function(text, trusted) {
+        $(function(){
+          $('#reset').on('click', function(e) {
+            e.preventDefault();
+            $.ajax({
+              url: 'http://www.timdemo.net/reset',
+              data: {
+                tid: trusted
+              },
+              complete: function(resp) {
+                console.log(resp)
+                //window.location.reload()
+              }
+            });
+          });
+          $('#turn-off').on('click', function(e) {
+            e.preventDefault();
+            $.ajax({
+              url: 'http://www.timdemo.net/turn_off',
+              data: {
+                tid: trusted
+              },
+              complete: function(resp) {
+                console.log(resp)
+                //window.location.reload()
+              }
+            });
+          });
+          $('#turn-on').on('click', function(e) {
+            e.preventDefault();
+            $.ajax({
+              url: 'http://www.timdemo.net/turn_on',
+              data: {
+                acr: acr
+              },
+              complete: function(resp) {
+                console.log(resp)
+                //window.location.reload()
+              }
+            });
+          });
+        });
+      }
     </script>
+    <script src="//www.timdemo.net/id.js"></script> 
   </head>
   <body>
     <h1 class='text-center'>TIM Test Server Farm</h1>
@@ -90,3 +129,4 @@
     </div>
   </body>
 </html>
+
