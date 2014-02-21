@@ -25,15 +25,28 @@ function build_test_response(exid, trusted)
 
 end
 
--- TODO is this necessary?
---function format_new_trusted_id(acr)
---  return string.format("000-%s", acr)
---end
+-- TODO we may want to buffer these requests
+function push_data(premature, acr, tid)
+  ngx.location.capture(
+    "/push",
+    {
+      method = ngx.HTTP_POST,
+      args = { acr = acr, tid = tid }
+    }
+  )
+end
 
 -- TODO Memcached Proxy should notify TIM backend server of new id
 function propigate_tid(acr, tid)
   memc_set(("acr_%s"):format(acr), tid)
   memc_set(("tid_%s"):format(tid), acr)
+
+  -- TODO By Default max pending timers of 1024 - we need a failure case
+  local ok, err = ngx.timer.at(0, push_data, acr, tid)
+
+  if not ok then
+    ngx.log(ngx.ERR, "failed to create push_data timer: ", err)
+  end
 end
 
 function memc_set(key, val)
@@ -97,9 +110,7 @@ if testmode then
 
         if status == ngx.HTTP_NOT_FOUND then
           tid = crypt.hash(acr)
-
-          memc_set(("acr_%s"):format(acr), tid)
-          memc_set(("tid_%s"):format(tid), acr)
+          propigate_tid(acr, tid)
         end
 
         build_response(crypt.encrypt(key, tid))
@@ -135,9 +146,7 @@ if acr then
   -- Generate a new new tim trusted id for this carrier trusted id
   if status == ngx.HTTP_NOT_FOUND then
     tid = crypt.hash(acr)
-
-    memc_set(("acr_%s"):format(acr), tid)
-    memc_set(("tid_%s"):format(tid), acr)
+    propigate_tid(acr, tid)
   end
 
 else -- etag present - roll forward

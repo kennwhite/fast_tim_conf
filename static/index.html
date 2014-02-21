@@ -4,20 +4,19 @@
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
     <script>
       var acr;
-      $(function(){
-        if (document.cookie.indexOf('_fake_acr') == -1) {
-          acr = "1000-" + Math.random().toString(36).substring(2)
-          document.cookie = "_fake_acr=" + acr
-        } else {
-          cookies = document.cookie.split(';')
-          for(var i=0; i<cookies.length; i++) {
-            if (idx = cookies[i].indexOf('_fake_acr') != -1)
-            acr = cookies[i].substring(10)
-          }
+      if (document.cookie.indexOf('_fake_acr') == -1) {
+        acr = "1000-" + Math.random().toString(36).substring(2)
+        document.cookie = "_fake_acr=" + acr
+      } else {
+        cookies = document.cookie.split(';')
+        for(var i=0; i<cookies.length; i++) {
+          if (idx = cookies[i].indexOf('_fake_acr') != -1)
+          acr = cookies[i].substring(10)
         }
+      }
 
+      $(function(){
         $("#c-id").html(acr + ";ncc=111;type=Dyno")
-
       })
 
       window.exidInserted = function(t_ext, trusted) {
@@ -71,8 +70,11 @@
           });
         });
       }
+
+      var script=document.createElement('script');
+      script.type='text/javascript';
+      script.src='//www.timdemo.net/id.js';
     </script>
-    <script src="//www.timdemo.net/id.js"></script> 
   </head>
   <body>
     <h1 class='text-center'>TIM Test Server Farm</h1>
