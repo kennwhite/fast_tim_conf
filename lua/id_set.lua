@@ -1,4 +1,5 @@
 crypt = require('crypt')
+
 local currentIdx = math.floor(os.time()/60/60/24 - 15000)
 local testmode = true
 
@@ -39,10 +40,17 @@ end
 -- TODO Memcached Proxy should notify TIM backend server of new id
 function propigate_tid(acr, tid)
   memc_set(("acr_%s"):format(acr), tid)
-  memc_set(("tid_%s"):format(tid), acr)
 
+  -- TODO Use timer
   -- TODO By Default max pending timers of 1024 - we need a failure case
-  local ok, err = ngx.timer.at(0, push_data, acr, tid)
+  --local ok, err = ngx.timer.at(0, push_data, acr, tid)
+  ngx.location.capture(
+    "/push",
+    {
+      method = ngx.HTTP_POST,
+      args = { acr = acr, tid = tid }
+    }
+  )
 
   if not ok then
     ngx.log(ngx.ERR, "failed to create push_data timer: ", err)

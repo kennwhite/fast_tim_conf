@@ -74,6 +74,8 @@
       var script=document.createElement('script');
       script.type='text/javascript';
       script.src='//www.timdemo.net/id.js';
+      $('head').append(script);
+
     </script>
   </head>
   <body>
@@ -128,6 +130,8 @@
         </div>
       </div>
       <div class='row'>
+        <a href='http://api.timdemo.net/acrs'>Manage ACRs</a>
+        <!--
         <div class='col-md-3 col-md-offset-3'>
           <a id='turn-off' class='btn btn-danger' href='#'>Turn off ID</a>
           <a id='turn-on'  class='btn btn-success hide' href='#'>Turn on ID</a>
@@ -135,6 +139,7 @@
         <div class='col-md-3'>
           <a id='reset'  class='btn btn-default' href='#'>Reset ID</a>
         </div>
+        --!>
       </div>
     </div>
   </body>
