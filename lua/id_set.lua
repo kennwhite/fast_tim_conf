@@ -32,7 +32,7 @@ function push_data(premature, acr, tid)
     "/push",
     {
       method = ngx.HTTP_POST,
-      args = { acr = acr, tid = tid }
+      args = { acr = acr, tim = tid }
     }
   )
 end
@@ -48,7 +48,7 @@ function propigate_tid(acr, tid)
     "/push",
     {
       method = ngx.HTTP_POST,
-      args = { acr = acr, tid = tid }
+      args = { acr = acr, tim = tid }
     }
   )
 
@@ -96,41 +96,16 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 if testmode then
-    if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
-      if headers['Cookie'] then
-        acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
-      end
+  if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
+    if headers['Cookie'] then
+      acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
     end
   end
 
-  if etag then
-    idx, exid = decode_etag(etag)
-    if currentIdx == tonumber(idx) then
-      local key, status = memc_get(("exid_key_%s"):format(idx))
-
-      tid = crypt.decrypt(key, exid)
-
-      linked_acr, status = memc_get(("tid_%s"):format(tid))
-      if status == ngx.HTTP_OK then
-        ngx.exit(ngx.HTTP_NOT_MODIFIED) 
-      elseif acr then
-        tid, status = memc_get(("acr_%s"):format(acr))
-
-        if status == ngx.HTTP_NOT_FOUND then
-          tid = crypt.hash(acr)
-          propigate_tid(acr, tid)
-        end
-
-        build_response(crypt.encrypt(key, tid))
-      else
-        build_response(crypt.encrypt(key, 'MISSING'))
-      end
-    end
-  end
-
-  if headers['FAIL'] == 'true' then
+  if not etag and headers['FAIL'] == 'true' then
     ngx.exit(ngx.HTTP_NOT_FOUND)
   end
+end
 
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
