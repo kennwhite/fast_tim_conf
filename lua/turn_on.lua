@@ -5,7 +5,7 @@ function memc_set(key, val)
   local resp = ngx.location.capture('/cache',
     { method = ngx.HTTP_POST,
       body = val,
-      args = { key = key } 
+      args = { key = key:lower() } 
     }
   )
 
@@ -16,7 +16,7 @@ function memc_get(key)
   local resp = ngx.location.capture('/cache',
     { method = ngx.HTTP_GET,
       body = '',
-      args = { key = key } 
+      args = { key = key:lower() } 
     }
   )
 
@@ -27,7 +27,7 @@ function memc_delete(key)
   local resp = ngx.location.capture('/cache',
     { method = ngx.HTTP_DELETE,
       body = '',
-      args = { key = key } 
+      args = { key = key:lower() } 
     }
   )
 
@@ -38,7 +38,7 @@ function memc_update(key, val)
   local resp = ngx.location.capture('/cache',
     { method = ngx.HTTP_PUT,
       body = val,
-      args = { key = key } 
+      args = { key = key:lower() } 
     }
   )
 

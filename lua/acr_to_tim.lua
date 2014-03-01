@@ -2,7 +2,7 @@ function memc_get(key)
   local resp = ngx.location.capture('/cache',
     { method = ngx.HTTP_GET,
       body = '',
-      args = { key = key } 
+      args = { key = key:lower() } 
     }
   )
 
