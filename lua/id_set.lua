@@ -95,7 +95,9 @@ local acr = headers['X-ACR']
 local etag = headers['IF-NONE-MATCH']
 local tid
 
-if testmode then
+if headers['MSISDN'] then
+  acr = string.format("1000-%s;ncc=111;type=Dyno", headers['MSISDN']); 
+elseif testmode then
   if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
     if headers['Cookie'] then
       acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)")); 
