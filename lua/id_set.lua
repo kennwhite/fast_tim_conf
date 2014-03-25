@@ -96,7 +96,9 @@ local etag = headers['IF-NONE-MATCH']
 local tid
 
 if headers['MSISDN'] then
-  acr = string.format("1000-%s;ncc=111;type=Dyno", headers['MSISDN']); 
+  acr = string.format("1000-%s;ncc=222;type=Dyno", headers['MSISDN']); 
+if headers['X-UIDH'] then
+  acr = string.format("1000-%s;ncc=333;type=Dyno", headers['X-UIDH']); 
 elseif testmode then
   if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
     if headers['Cookie'] then
