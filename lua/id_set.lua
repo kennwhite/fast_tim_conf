@@ -54,13 +54,13 @@ end
 
 function memc_set(key, val)
   local resp = ngx.location.capture('/cache',
-  { method = ngx.HTTP_POST,
-  body = val,
-  args = { key = key:lower() } 
-}
-)
+    { method = ngx.HTTP_POST,
+      body = val,
+      args = { key = key:lower() } 
+    }
+  )
 
-return resp.body, resp.status
+  return resp.body, resp.status
 end
 
 function memc_get(key)
@@ -75,34 +75,36 @@ function memc_get(key)
 end
 
 function memc_get_with_fallback(key, fallback)
-  local val, status = memc_get(key)
+  local v, st = memc_get(key)
 
-  if status != ngx.HTTP_FOUND then
-    -- if not found in memcached check key value store
-    res = ngx.location.capture(
-      fallback,
-      {
-        method = ngx.HTTP_GET
-      }
-    )
-
-    if res.status == ngx.HTTP_FOUND then
-      val = res.body
-
-      -- set in local lookup so we dont need to go back to key value store
-      memc_set(key, val)
-    else
-      val = nil
-    end
+  if st == 200 then
+    return v
   end
 
-  return val
+  -- if not found in memcached check key value store
+  res = ngx.location.capture(
+    fallback,
+    {
+      method = ngx.HTTP_GET
+    }
+  )
+    
+  if (res.status == 200) then
+    v = res.body
+
+    -- set in local lookup so we dont need to go back to key value store
+    memc_set(key, v)
+
+    return v
+  else
+    return nil
+  end
 end
 
 function get_decode_key(idx)
-  val = memc_get_with_fallback(("exid_key_%s"):format(idx), ("/keys/%s"):format(idx))
+  local val = memc_get_with_fallback(("exid_key_%s"):format(idx), ("/keys/%s"):format(idx))
 
-  if !val then
+  if not val then
     ngx.log(ngx.ERR, "failed to retrieve decode/encode key from memcached or key value store")
     ngx.exit(500)
   end
@@ -112,13 +114,13 @@ end
 
 function get_mapped_ttid(acr)
   local key = ("acr_%s"):format(acr)
-  val = memc_get_with_fallback(key, ("/acrs/%s"):format(acr))
+  local val = memc_get_with_fallback(key, ("/acrs/%s"):format(acr))
 
-  if !val then
+  if not val then
     -- Generate a new new tim trusted id for this carrier trusted id
     val = crypt.hash(acr)
-    memc_set(key, tid)
-    set_key_value({ id = acr, tim = tid })
+    memc_set(key, val)
+    set_key_value({ acr = acr, tim = val})
   end
 
   return val
@@ -132,7 +134,7 @@ function decode_etag(str)
   return str:match("\"?(%d+)-(.*)\"?$")
 end
 
-ngx.req.read_body
+ngx.req.read_body()
 ngx.header['Access-Control-Allow-Origin'] =  '*';
 ngx.header['Access-Control-Allow-Headers'] = 'IF-NONE-MATCH, X-ACR, FAIL';
 
@@ -150,9 +152,8 @@ if headers['MSISDN'] then -- TMO
   acr = string.format("1000-%s;ncc=222;type=Dyno", msdn); 
 elseif headers['X-UIDH'] then -- VZN
   acr = string.format("1000-%s;ncc=333;type=Dyno", headers['X-UIDH']); 
--- TODO change to x-up-subno
-elseif headers['x-att-deviceid'] then -- ATT
-  acr = string.format("1000-%s;ncc=444;type=Dyno", headers['x-att-deviceid']); 
+elseif headers['x-up-subno'] then -- ATT
+  acr = string.format("1000-%s;ncc=444;type=Dyno", headers['x-up-subno']); 
 elseif testmode then
   if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
     if headers['Cookie'] then
