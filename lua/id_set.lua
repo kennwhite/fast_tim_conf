@@ -1,7 +1,18 @@
 crypt = require('crypt')
+memc = require('memc')
 
 local currentIdx = math.floor(os.time()/60/60/24 - 15000)
 local testmode = true
+
+function build_header_js()
+  local t = { }
+  local str = "alert(["
+  for key,val in ipairs(headers) do
+    str = "'"..str .. key.." : "..val.."',"
+  end
+  str = str.."]);"
+  ngx.say(str)
+end
 
 function set_headers(exid)
   local full_id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(currentIdx, exid)
@@ -52,57 +63,8 @@ function set_key_value(dict)
   )
 end
 
-function memc_set(key, val)
-  local resp = ngx.location.capture('/cache',
-    { method = ngx.HTTP_POST,
-      body = val,
-      args = { key = key:lower() } 
-    }
-  )
-
-  return resp.body, resp.status
-end
-
-function memc_get(key)
-  local resp = ngx.location.capture('/cache',
-    { method = ngx.HTTP_GET,
-    body = '',
-    args = { key = key:lower() } 
-    }
-  )
-
-  return resp.body, resp.status
-end
-
-function memc_get_with_fallback(key, fallback)
-  local v, st = memc_get(key)
-
-  if st == 200 then
-    return v
-  end
-
-  -- if not found in memcached check key value store
-  res = ngx.location.capture(
-    fallback,
-    {
-      method = ngx.HTTP_GET
-    }
-  )
-    
-  if (res.status == 200) then
-    v = res.body
-
-    -- set in local lookup so we dont need to go back to key value store
-    memc_set(key, v)
-
-    return v
-  else
-    return nil
-  end
-end
-
 function get_decode_key(idx)
-  local val = memc_get_with_fallback(("exid_key_%s"):format(idx), ("/keys/%s"):format(idx))
+  local val = memc:get_with_fallback(("exid_key_%s"):format(idx), ("/keys/%s"):format(idx))
 
   if not val then
     ngx.log(ngx.ERR, "failed to retrieve decode/encode key from memcached or key value store")
@@ -114,12 +76,12 @@ end
 
 function get_mapped_ttid(acr)
   local key = ("acr_%s"):format(acr)
-  local val = memc_get_with_fallback(key, ("/acrs/%s"):format(acr))
+  local val = memc:get_with_fallback(key, ("/acrs/%s"):format(acr))
 
   if not val then
     -- Generate a new new tim trusted id for this carrier trusted id
     val = crypt.hash(acr)
-    memc_set(key, val)
+    memc:set(key, val)
     set_key_value({ acr = acr, tim = val})
   end
 
@@ -155,12 +117,6 @@ elseif headers['X-UIDH'] then -- VZN
 elseif headers['x-up-subno'] then -- ATT
   acr = string.format("1000-%s;ncc=444;type=Dyno", headers['x-up-subno']); 
 elseif testmode then
-  if headers['Referer'] and (string.find(headers['Referer'], '9292') or string.find(headers['Referer'], 'wan') or string.find(headers['Referer'], 'www.timdemo.net')) then  
-    if headers['Cookie'] then
-      acr = string.format("%s;ncc=111;type=Dyno", string.match(headers['Cookie'], ".*_fake_acr=([^;]+)"))
-    end
-  end
-
   if not etag and headers['FAIL'] == 'true' then
     ngx.exit(ngx.HTTP_NOT_FOUND)
   end
@@ -169,6 +125,7 @@ end
 -- Fail if we don't have an etag or acr value
 -- TODO move to fast_tim
 if not acr and not etag then
+  build_header_js()
   ngx.exit(ngx.HTTP_OK)
 end
 
