@@ -29,7 +29,7 @@ return {
     end
 
     -- if not found in memcached check key value store
-    res = ngx.location.capture(
+    local res = ngx.location.capture(
       fallback,
       {
         method = ngx.HTTP_GET
