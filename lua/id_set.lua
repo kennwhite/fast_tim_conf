@@ -11,7 +11,6 @@ local headers = ngx.req.get_headers()
 local etag = headers['IF-NONE-MATCH']
 local acr, tid, provider, exid, idx
 
-
 if not etag and (headers['Cookie'] and headers['Cookie']:find("__acr")) then
   ngx.log(ngx.INFO, "ACR Cookie Present : ", headers['Cookie'])
   etag = string.match(headers['Cookie'], ".*__acr=([^;]+)")
@@ -42,17 +41,14 @@ end
 if acr then -- convert carrier trusted to tim trusted id
   tid = timfunc:get_mapped_ttid(acr)
 else -- etag present, decode T-EID
-  idx, exid = timfunc.decode_etag(etag)
-  local old_key = timfunc.get_decode_key(idx)
-  tid = crypt.decrypt(old_key, exid)
+  tid = timfunc:decode_etag(etag)
 end
 
--- Get current key for encoding
-local key = timfunc:get_decode_key(timfunc:currentIdx())
+local teid = timfunc:build_teid(tid)
 
 if testmode then
-  timfunc:build_test_response(crypt.encrypt(key, tid), tid)
+  timfunc:build_test_response(teid, tid)
 else
-  timfunc:build_response(crypt.encrypt(key, tid))
+  timfunc:build_response(teid)
 end
 

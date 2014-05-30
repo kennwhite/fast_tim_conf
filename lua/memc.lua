@@ -43,8 +43,8 @@ return {
       self:set(key, v)
 
       return v
-    else
-      return nil
     end
+
+    return nil
   end
 }

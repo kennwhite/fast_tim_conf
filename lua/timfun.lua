@@ -4,7 +4,7 @@ local memc = require('memc')
 return {
   -- TODO should be static per execution
   currentIdx = function ()
-    math.floor(os.time()/60/60/24 - 15000)
+    return math.floor(os.time()/60/60/24 - 15000)
   end,
 
   set_headers = function (self, exid)
@@ -32,7 +32,7 @@ return {
   build_test_response = function (self, exid, trusted)
     self:set_headers(exid)
     local id = ("\"%4d-%s;ncc=9999;type=Dyna\""):format(self.currentIdx(), exid) 
-    ngx.say(([[window['exidInserted'] ?\ 
+    ngx.say(([[window['exidInserted'] ?
                window.exidInserted('%s', '%s') : false;]]):format(
                 id,
                 trusted)) 
@@ -70,18 +70,30 @@ return {
       -- Generate a new new tim trusted id for this carrier trusted id
       val = crypt.hash(acr) -- TODO should use a global salt here
       memc:set(key, val)
-      self:set_key_value({ acr = acr, tim = val})
+      self.set_key_value({ acr = key, tim = val})
     end
 
     return val
   end,
 
-  decode_id = function(str)
+  id_components = function(str)
     return str:match("(%d+)-([^;]+);ncc\=(%d+);type=(%a+)")
   end,
 
-  decode_etag = function (str)
-    return str:match("\"?(%d+)-(.*)\"?$")
-  end
+  decode_etag = function (self, etag)
+    idx, exid = self.etag_components(etag)
+    local old_key = self.get_decode_key(idx)
+    return crypt.decrypt(old_key, exid)
+  end,
 
+  etag_components = function (str)
+    return str:match("\"?(%d+)-(.*)\"?$")
+  end,
+
+  build_teid = function(self, tid)
+    -- Get current key for encoding
+    local currentIndex = self.currentIdx()
+    local key = self.get_decode_key(currentIdx)
+    return crypt.encrypt(key, tid)
+  end
 }
