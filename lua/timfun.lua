@@ -39,13 +39,23 @@ return {
   end,
 
   set_key_value = function (dict)
-    ngx.location.capture(
-      "/push",
-      {
-        method = ngx.HTTP_POST,
-        args = dict
-      }
-    )
+
+    local function push_data(dic)
+      ngx.location.capture(
+        "/push",
+        {
+          method = ngx.HTTP_POST,
+          args = dict
+        }
+      )
+    end
+
+    local ok, err = ngx.timer.at(0, push_data, dict)
+
+    if not ok then
+        ngx.log(ngx.ERR, "failed to create timer: ", err)
+        return
+    end
   end,
 
   get_decode_key = function (idx)
@@ -93,7 +103,7 @@ return {
   build_teid = function(self, tid)
     -- Get current key for encoding
     local currentIndex = self.currentIdx()
-    local key = self.get_decode_key(currentIdx)
+    local key = self.get_decode_key(currentIndex)
     return crypt.encrypt(key, tid)
   end
 }
