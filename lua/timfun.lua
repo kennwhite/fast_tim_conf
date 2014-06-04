@@ -40,7 +40,7 @@ return {
 
   set_key_value = function (dict)
 
-    local function push_data(dic)
+    local function push_data(dict)
       ngx.location.capture(
         "/push",
         {
